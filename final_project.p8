@@ -103,7 +103,7 @@ function _update()
 		end
 	else
 		
-		if fget(mget(plr.x/8,plr.y/8),7) then
+		if fget(mget((plr.x+(level-1)*128)/8,plr.y/8),7) then
 			level +=1
 			plr.x = 8
 			plr.y = 104
@@ -194,7 +194,7 @@ function move()
 	end
 	
 	--get the object at center y, x + offset
-	local obj_at = mget((plr.x+x_ofst)/8,(plr.y+4)/8)
+	local obj_at = mget((plr.x+x_ofst+(level-1)*128)/8,(plr.y+4)/8)
 	
 	--if theres an object where this would move us
 	--go back to where we started in terms of x
@@ -230,7 +230,7 @@ function move()
 	end
 	
 	--get object at where we'd fall to, center of player
-	obj_at = mget((plr.x+4)/8,(plr.y+y_ofst)/8)
+	obj_at = mget((plr.x+4+(level-1)*128)/8,(plr.y+y_ofst)/8)
 
 	if fget(obj_at,0) then
 		--gets the top of the object that we're hitting
