@@ -5,6 +5,8 @@ __lua__
 
 function _init()
 
+ btn_vector = {0,0,0,0,0,0}
+
 	bnp = false
 	b_time = 0
 	wall_x = 0
@@ -91,11 +93,10 @@ function _draw()
 		spr(plr.sprite,plr.x,plr.y,1,1,plr.face_r)
 
 		if plr.grapple then
-		 rectfill(plr.x+4,plr.y+4, plr.x+grapple_tick,plr.y+5,12)
+		 line(plr.x+4,plr.y+4, grapple_x, grapple_y+4, 12)
 		end
 		--uncomment to debug
 
-		print("wall_jumps: "..plr.wall_jumps,10,10,7)
 		--print("x:"..plr.x.." dy:"..plr.dy,16,16,7)
 		--print(plr.on_wall,20,20,5)
 		--print(wall_x,30,30,5)
@@ -104,6 +105,7 @@ end
 
 function _update()
 
+ btn_vector = {0,0,0,0,0,0}
 
 	if screen == "controls" then
 		if btn(5) then
@@ -123,6 +125,7 @@ function _update()
 
 
 		if btn(0) then
+			btn_vector[1] = 1
 			if jump_from == "right" then
 				plr.wall_jumps = 1
 			end
@@ -131,7 +134,9 @@ function _update()
 			end
 			plr.dx-=.25
 		end
+
 		if btn(1) then
+			btn_vector[2] = 1
 			if jump_from == "left" then
 				plr.wall_jumps = 1
 			end
@@ -142,6 +147,7 @@ function _update()
 		end
 		--btn 2 is the up arrow
 		if btn(2) then
+			btn_vector[3] = 1
 			if plr.j_left > 0 and not bnp then
 				plr.on_wall = false
 				plr.dy=-1.5
@@ -158,6 +164,7 @@ function _update()
 		end
 
 		if btn(3) then
+			btn_vector[4] = 1
 			time_held+=1
 			if time_held > 20 and plr.has_charge then
 				plr.charge_j = true
@@ -175,29 +182,48 @@ function _update()
 		if btn(4) and plr.has_grapple and not plr.grapple then
 			plr.grapple = true
 			grapple_tick = 0
-			if not plr.face_r then
-				grapple_tick = 8
-				plr.grapple_dir = "right"
+			grapple_x = 0
+			grapple_y = 0
+   --determine direction of grapple
+			if btn_vector[1]==1 and btn_vector[2]==0 and btn_vector[3]==0 then
+				grapple_dir = "l"
+				x_gchange = -3
+				y_gchange = 0
+			elseif btn_vector[1]==0 and btn_vector[2]==1 and btn_vector[3]==0 then
+			 grapple_dir = "r"
+				x_gchange = 3
+				y_gchange = 0
+			elseif (btn_vector[1]==0 and btn_vector[2]==0 and btn_vector[3]==1) or (btn_vector[0]==1 and btn_vector[1]==1 and btn_vector[2]==1) then
+			 grapple_dir = "u"
+				x_gchange = 0
+				y_gchange = -3
+			elseif btn_vector[1]==0 and btn_vector[2]==1 and btn_vector[3]==1 then
+			 grapple_dir = "ur"
+				x_gchange = 1.5
+				y_gchange = -1.5
+			elseif btn_vector[1]==1 and btn_vector[2]==0 and btn_vector[3]==1 then
+			 grapple_dir = "ul"
+				x_gchange = -1.5
+				y_gchange = -1.5
 			else
-				plr.grapple_dir = "left"
+				grapple_dir = "r"
+				x_gchange = 3
+				y_gchange = 0
 			end
 		end
 
 		if plr.grapple then
-			if plr.grapple_dir == "right" then
-    grapple_tick += 3
-			else
-				grapple_tick -= 3
-			end
-			if fget(mget((plr.x+grapple_tick)/8,(plr.y+4)/8),0) then
-				plr.x = plr.x+grapple_tick
-				if plr.grapple_dir == "right" then
-				 plr.x -= 8
-				end
+			grapple_tick += 1
+			grapple_x = plr.x + (x_gchange*grapple_tick)
+			grapple_y = plr.y + (y_gchange*grapple_tick)
+			if fget(mget(grapple_x/8,grapple_y/8),0) then
+				plr.x = grapple_x
+				plr.y = grapple_y
+				plr.j_left = plr.max_jump
 				grapple_tick = 0
 				plr.grapple = false
 			end
-			if grapple_tick > 70 or grapple_tick < -70 then
+			if grapple_tick > 30 or grapple_tick < -70 then
 				grapple_tick = 0
 				plr.grapple = false
 		 end
