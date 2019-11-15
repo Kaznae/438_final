@@ -44,6 +44,8 @@ function _init()
 
 	world = 1
 	level = 1
+	
+	g_rev = false
 
 	mapx_ofst = 0
 	mapy_ofst = 0
@@ -97,6 +99,7 @@ function _init()
 		has_charge = false,
 		has_double = false,
 		dead = false,
+		face_up = false,
 		--functions
 
 		respawn = function()
@@ -106,8 +109,10 @@ function _init()
 			plr.y = basey
 			plr.dy = 0
 			plr.dx = 0
+			plr.face_up = false
 			plr.ticker = 0
 			plr.weighted = true
+			g_rev = false
 			on_map = {}
 			start_room()
 		end,
@@ -125,10 +130,14 @@ function _init()
 			if plr.has_double then
 				plr.max_jump = 2
 			end
-			if plr.y+plr.h > 128 then
+			if not g_rev and plr.y+plr.h > 128 then
+				plr.respawn()
+			end
+			if g_rev and plr.y < 0 then
 				plr.respawn()
 			end
 			if plr.controllable then
+				
 				btn_vector = {0,0,0,0}
 				if btn(0) then
 					btn_vector[1] = 1
@@ -152,16 +161,21 @@ function _init()
 				end
 				--btn 2 is the up arrow
 				if btn(2) then
+					local mod = 1
+					if g_rev then
+						mod = -1
+					end
+				
 					btn_vector[3] = 1
 					if plr.j_left > 0 and not bnp then
 						plr.on_wall = false
-						plr.dy=-1.5
+						plr.dy=-1.5 * mod
 						plr.on_ground = false
 						plr.j_left -=1
 						bnp = true
 					elseif bnp and b_time < 6 then
 						b_time +=1
-						plr.dy=-2
+						plr.dy=-2 * mod
 					end
 				else
 					bnp = false
@@ -176,7 +190,7 @@ function _init()
 				else
 					time_held = 0
 					if plr.charge_j == true then
-						plr.dy =- 5
+						plr.dy =- 5*mod
 						plr.on_ground = false
 						plr.j_left -=1
 						plr.charge_j = false
@@ -335,7 +349,7 @@ function _init()
 			elseif plr.clr == "yellow" then
 			 pal(12,10)
 			end
-			spr(plr.sprite,plr.x,plr.y,1,1,plr.face_r)
+			spr(plr.sprite,plr.x,plr.y,1,1,plr.face_r,plr.face_up)
    pal()
 
 		end
@@ -490,9 +504,14 @@ function move(obj)
 	local realx = obj.x + (level-1)*128
 	local realy = obj.y + (world-1)*128
 
+	local mod = 1
+	if g_rev then
+		mod = -1
+	end
+	
 	--attempt to change dy
 	if obj.weighted then
-		obj.dy+=gravity
+		obj.dy+=gravity * mod
 		if plr.clr == "yellow" then
 			printh("yo")
    obj.dy-=.10
@@ -583,6 +602,8 @@ function move(obj)
 	--if fget(obj_at,0) then
 		--gets the top of the object that we're hitting
 
+		local tempob = get_obj_at(realx+4-(level-1)*128,realy+y_ofst-(world-1)*128)
+
 		if obj.is_player and obj.g_success then
 			obj.g_success = false
 			obj.grapple_dir = {0,0}
@@ -610,8 +631,27 @@ function move(obj)
 		end
 
 		if obj.dy < 0 then
-			obj.y = flr((obj.y+8)/8)*8
-			obj.dy = 0
+			--lets us use platforms appropriately while
+			--in negative gravity
+			if tempob ~= nil and g_rev then
+				obj.y = tempob.y+tempob.h
+				obj.dy = 0
+				obj.on_ground = true
+				if obj.j_left < obj.max_jump then
+					obj.j_left = obj.max_jump
+					obj.wall_jumps = 1
+				end
+			else
+				obj.y = flr((obj.y+8)/8)*8
+				obj.dy = 0
+				if g_rev then
+					obj.on_ground = true
+					if obj.j_left < obj.max_jump then
+						obj.j_left = obj.max_jump
+						obj.wall_jumps = 1
+					end
+				end
+			end
 		end
 
 	end
@@ -624,7 +664,7 @@ function move(obj)
 	--die and restart the level
 
 	if obj.is_player then
-		if deadly_collision(realx,realy) or deadly_collision(realx+7,realy) or deadly_collision(realx,realy+7) or deadly_collision(realx+7,realy+7) then
+		if deadly_collision(realx+1,realy) or deadly_collision(realx+6,realy) or deadly_collision(realx+1,realy+7) or deadly_collision(realx+6,realy+7) then
 			plr.die()
 				--plr.respawn()
 				--destroy enemy
@@ -875,10 +915,16 @@ function create_classes()
 			if this.state == 0 then
 				this.solid = true
 				this.sprite = 77
-
-				if obj_in_range(plr,this.x,this.y-1,8,1) then
-					this.state = 1
-					this.ticker = 40
+				if not g_rev then
+					if obj_in_range(plr,this.x,this.y-1,8,1) then
+						this.state = 1
+						this.ticker = 40
+					end
+				else
+					if obj_in_range(plr,this.x,this.y+this.h+1,8,1) then
+						this.state = 1
+						this.ticker = 40
+					end
 				end
 			elseif this.state == 1 then
 				this.sprite = 78
@@ -980,11 +1026,18 @@ function create_classes()
 
 			local rx = this.x + (level-1)*128
 			local ry = this.y + (world-1)*128
-
-			if plr.y <= this.y-5 then
-				this.solid = true
+			if not g_rev then
+				if plr.y <= this.y-5 then
+					this.solid = true
+				else
+					this.solid = false
+				end
 			else
-				this.solid = false
+				if plr.y > this.y+this.h-1 then
+					this.solid = true
+				else
+					this.solid = false
+				end
 			end
 
 			local xoff = -1
@@ -1000,10 +1053,16 @@ function create_classes()
 			elseif this.x+this.w > 128 or this.x < 0 then
 				this.dir*=-1
 			end
-
-			if obj_in_range(plr,this.x,this.y-1,16,1) then
-				g_friction = .93
-				plr.x+=this.dir
+			if not g_rev then
+				if obj_in_range(plr,this.x,this.y-1,16,1) then
+					g_friction = .93
+					plr.x+=this.dir
+				end
+			else
+				if obj_in_range(plr,this.x,this.y+this.h+1,16,1) then
+					g_friction = .93
+					plr.x+=this.dir
+				end
 			end
 
 
@@ -1063,6 +1122,38 @@ function create_classes()
 	}
 		add(classes,elevator)
 
+	grav_shift = {
+		tile = 103,
+		init = function(this)
+			this.solid = false
+			this.h = 16
+			this.w = 16
+			this.ticker = 0
+		end,
+		draw = function(this)
+			spr(103,this.x,this.y,2,2)
+		end,
+		update = function(this)
+			if this.ticker > 0 then
+				this.ticker -= 1
+			end
+			if this.ticker <= 0 and obj_in_range(plr,this.x+4,this.y+4,8,8) then
+				this.ticker = 60
+				if g_rev then
+					g_rev = false
+				else
+					g_rev = true
+				end
+				if plr.face_up then
+					plr.face_up = false
+				else
+					plr.face_up = true
+				end
+			end
+		end
+		}
+		
+		add(classes,grav_shift)
 end
 
 function create(x,y,class)
