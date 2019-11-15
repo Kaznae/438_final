@@ -8,19 +8,19 @@ function _init()
 	checkx = 0
 	checky = 0
 	--constants
-	
+
 	g_friction = .95
 	a_friction = .97
 	gravity = 0.25
-	
+
 	--flags
 	solid_flag = 1
 	wall_flag = 2
 	deadly_flag = 3
 	power_flag = 4
 	goal_flag = 7
-	
-	
+
+
 	sprites = {
 		standing = 1,
 		running = 3,
@@ -33,33 +33,35 @@ function _init()
 		cloud = 101,
 		dead = 48
 	}
-	
+
 	--global vars
 	screen = "controls"
-	
+
 	disp_msg = false
 	msg = ""
 	tempstr = ""
 	msg_tick = 0
-	
+
 	world = 1
 	level = 1
-	
+
 	mapx_ofst = 0
 	mapy_ofst = 0
 	bnp = false
 	b_time = 0
 	wall_x = 0
-	
+
 	part_tick = 0
 	jump_from = ""
 	time_held = 0
-	
-	
+
+ red_display = true
+	yellow_display = true
+
 	basex = 8
 	basey = 104
 	classes = {}
-	
+
 	plr = {
 		--instance vars
 		controllable = true,
@@ -96,7 +98,7 @@ function _init()
 		has_double = false,
 		dead = false,
 		--functions
-		
+
 		respawn = function()
 			plr.respawning = true
 			plr.controllable = false
@@ -109,7 +111,7 @@ function _init()
 			on_map = {}
 			start_room()
 		end,
-		
+
 		die = function()
 			plr.dead = true
 			plr.ticker = 30
@@ -118,7 +120,7 @@ function _init()
 			plr.dx = 0
 			plr.dy = 0
 		end,
-		
+
 		update = function()
 			if plr.has_double then
 				plr.max_jump = 2
@@ -151,7 +153,7 @@ function _init()
 				--btn 2 is the up arrow
 				if btn(2) then
 					btn_vector[3] = 1
-					if plr.j_left > 0 and not bnp then	
+					if plr.j_left > 0 and not bnp then
 						plr.on_wall = false
 						plr.dy=-1.5
 						plr.on_ground = false
@@ -180,7 +182,7 @@ function _init()
 						plr.charge_j = false
 					end
 				end
-				
+
 				if btn(4) and plr.has_grapple and not plr.grapple then
 					plr.grapple = true
 					plr.grapple_tick = 0
@@ -196,19 +198,19 @@ function _init()
 					if btn_vector[4] == 1 then
 						plr.grapple_dir[2] = 3
 					end
-					
+
 					if plr.grapple_dir[1] == 0 and plr.grapple_dir[2] == 0 then
 						plr.grapple_dir[2] = -3
 						plr.grapple_dir[1] = 3 * sgn(plr.dx)
 					end
-					
-					
+
+
 					if plr.grapple_dir[1] ~= 0 and plr.grapple_dir[2]~= 0 then
 						plr.grapple_dir[1] = plr.grapple_dir[1]/2
 						plr.grapple_dir[2] = plr.grapple_dir[2]/2
 					end
 				end
-				
+
 				if plr.grapple and plr.has_grapple then
 					plr.grapple_tick +=1
 					plr.grapple_x = plr.x + (plr.grapple_dir[1]*plr.grapple_tick)
@@ -229,30 +231,30 @@ function _init()
 						end
 					end
 				end
-				
+
 				if plr.g_success then
 					plr.dx = plr.grapple_dir[1]
 					plr.dy = plr.grapple_dir[2]
 					plr.weighted = false
 				end
-					
-				
+
+
 				physics_update()
-				
-			
+
+
 			end
 			move(plr)
 			plr.spr_update()
 		end,
 		spr_update = function()
 			plr.ticker += 0.5
-			
+
 			if plr.dx < 0 then
 				plr.face_r = true
 			elseif plr.dx > 0 then
 				plr.face_r = false
 			end
-			
+
 			if plr.dead then
 				plr.ticker-=2
 				if plr.ticker >=20 then
@@ -280,7 +282,7 @@ function _init()
 					end
 				end
 				plr.ticker-=1
-			
+
 			elseif plr.respawning then
 				plr.controllable = false
 				plr.sprite = sprites.spawn
@@ -299,7 +301,7 @@ function _init()
 					plr.sprite = sprites.falling-- + --modifier
 				end
 			else
-				
+
 				if abs(plr.dx) > 0 then
 					plr.sprite = sprites.running-- + modifier
 				else
@@ -313,7 +315,7 @@ function _init()
 						plr.sprite = sprites.standing-- + modifier
 					end
 				end
-				
+
 				if plr.ticker > 10 then
 					if plr.ticker < 20 then
 						plr.sprite += 1
@@ -321,28 +323,33 @@ function _init()
 						plr.ticker = 0
 					end
 				end
-				
+
 			end
 		end,
 		draw = function()
 			if plr.grapple then
 		 	line(plr.x+4,plr.y+4, plr.grapple_x, plr.grapple_y+4, 12)
 			end
+			if plr.clr == "red" then
+			 pal(12,14)
+			elseif plr.clr == "yellow" then
+			 pal(12,10)
+			end
 			spr(plr.sprite,plr.x,plr.y,1,1,plr.face_r)
-		
-		
+   pal()
+
 		end
 		}
-		
+
 		create_classes()
 		parts = {}
 		clouds = {}
 		on_map={}
-		
+
 		for c = 0,40 do
 			parts[c] = make_snow()
 		end
-		
+
 		for z = 1,7 do
 			clouds[z] = make_cloud()
 		end
@@ -357,7 +364,7 @@ end
 
 function _draw()
 	--rectfill(0,0,128,128,0)
-	
+
 	if screen == "controls" then
 		cls()
 		rectfill(0,0,128,128,0)
@@ -365,25 +372,25 @@ function _draw()
 		print("hold up arrow for a longer jump",0,30,7)
 		print("tap for a shorter jump",0,40,7)
 		print("use the x key to sprint",0,60,7)
-		print("you'll discover new powers throughout the game!",0,80,7) 
+		print("you'll discover new powers throughout the game!",0,80,7)
 		print("press x to continue to the game",0,90,7)
 		--print("press x to continue to the game",0,110,7)
-	else	
-		
+	else
+
 		cls()
-		
+
 		--palt(0,false)
-		
+
 		rectfill(0,0,128,128,1)
-		
+
 		if world == 1 then
 			foreach(clouds,function(cloud)
 				spr(sprites.cloud,cloud.x,cloud.y,2,1)
 			end)
 		end
-		
+
 		map((level-1)*16,(world-1)*16,0,0,16,16,1)
-		
+
 		if plr.clr == "red" then
 			pal(12,14)
 		end
@@ -405,24 +412,24 @@ function _draw()
 				rectfill(temp.x,temp.y,temp.x+0.5,temp.y+0.5,clr)
 			end
 		end
-		
-		if disp_msg then	
+
+		if disp_msg then
 			--palt(0,false)
 			rectfill(8,90,120,120,0)
 			print(tempstr,16,95,7)
 		end
-		
+
 		--uncomment to debug
-		
+
 		--print("wall_jumps: "..plr.wall_jumps,10,10,7)
-		print(checkx,16,16,8)
+		--print(checkx,16,16,8)
 		--print(#on_map,20,20,5)
 		--print(wall_x,30,30,5)
 	end
 end
 
 function _update()
-	
+
 	if screen == "controls" then
 		if btn(5) then
 			screen = "game"
@@ -442,9 +449,9 @@ function _update()
 		if world == 3 and level == 3 then
 			display_message("you win!!! (for now)")
 		end
-		
-		plr.update()	
-		
+
+		plr.update()
+
 		--call the update function
 		--for any object on the map
 		foreach(on_map,function(obj)
@@ -454,9 +461,9 @@ function _update()
 			--	checkx = "updating "..obj.type.tile
 			end
 		end)
-		
-		
-		
+
+
+
 		if not plr.gonext and fget(mget((plr.x+(level-1)*128)/8,(plr.y+(world-1)*128)/8),goal_flag) then
 			plr.gonext = true
 			plr.controllable = false
@@ -464,8 +471,8 @@ function _update()
 			plr.dx = 0
 			plr.dy = 0
 		end
-			
-		
+
+
 		physics_update()
 		part_tick +=1
 		particle_update()
@@ -479,22 +486,26 @@ function move(obj)
 	starty = obj.y
 	local x_ofst = -1
 	local y_ofst = 0
-	
+
 	local realx = obj.x + (level-1)*128
 	local realy = obj.y + (world-1)*128
-	
+
 	--attempt to change dy
 	if obj.weighted then
 		obj.dy+=gravity
+		if plr.clr == "yellow" then
+			printh("yo")
+   obj.dy-=.10
+		end
 	end
-	
+
 	if obj.dx == 0 and obj.dy == 0 then
 		return
 	end
-	
+
 	--attempt to move in x direction
 	obj.x += obj.dx
-	
+
 	if not plr.gonext then
 		if obj.x + obj.w > 128 then
 			obj.x = 128-obj.w
@@ -505,30 +516,30 @@ function move(obj)
 			obj.dx = 0
 		end
 	end
-	
+
 	if obj.dx > 0 then
 		x_ofst = obj.w
 	end
-	
+
 	--get the object at center y, x + offset
 	local obj_at = mget((realx+x_ofst)/8,(realy+4)/8)
-	
-	
+
+
 	--if they touch a paint bucket
 	--change color and stats
-	
-	
+
+
 	--if theres an object where this would move us
 	--go back to where we started in terms of x
 	if solid_collision(realx+x_ofst,realy+4) then
-		
+
 		if obj.is_player and obj.g_success then
 			obj.g_success = false
 			obj.grapple_dir = {0,0}
 			obj.grapple_tick = 0
 			obj.weighted = true
 		end
-		
+
 		if obj.dx > 0 then
 			jump_from = "right"
 			obj.x = flr((obj.x)/8)*8
@@ -536,9 +547,9 @@ function move(obj)
 			jump_from = "left"
 			obj.x = flr((obj.x+8)/8)*8
 		end
-		
+
 		obj.dx = 0
-		if obj.weighted then	
+		if obj.weighted then
 			--this is bad but we'll try it
 			if obj.is_player then
 				if not obj.on_ground then
@@ -556,7 +567,7 @@ function move(obj)
 			end
 		end
 	end
-	
+
 	obj.y += obj.dy
 
 	realy = obj.y + (world-1)*128
@@ -564,26 +575,26 @@ function move(obj)
 	if obj.dy > 0 then
 		y_ofst = 7
 	end
-	
+
 	--get object at where we'd fall to, center of player
 	--obj_at = mget((plr.x+4+(level-1)*128)/8,(plr.y+y_ofst)/8)
- 
+
  if solid_collision(realx+4,realy+y_ofst) then
 	--if fget(obj_at,0) then
 		--gets the top of the object that we're hitting
-		
+
 		if obj.is_player and obj.g_success then
 			obj.g_success = false
 			obj.grapple_dir = {0,0}
 			obj.grapple_tick = 0
 			obj.weighted = true
 		end
-		
+
 		--if we were moving down
 		if obj.dy > 0 then
 			obj.y = flr(obj.y/8)*8
-		
-		
+
+
 			--stops our movement
 			obj.dy = 0
 			--we're on the ground
@@ -597,21 +608,21 @@ function move(obj)
 				end
 			end
 		end
-		
+
 		if obj.dy < 0 then
 			obj.y = flr((obj.y+8)/8)*8
 			obj.dy = 0
 		end
-		
+
 	end
-	
+
 	--now we've finished moving,
 	--check for other stuff
-	
-	
+
+
  --if player touches deadly object such as spikes
 	--die and restart the level
-	
+
 	if obj.is_player then
 		if deadly_collision(realx,realy) or deadly_collision(realx+7,realy) or deadly_collision(realx,realy+7) or deadly_collision(realx+7,realy+7) then
 			plr.die()
@@ -623,7 +634,7 @@ function move(obj)
 			gain_power(realx+x_ofst,realy+y_ofst, obj_at)
 		end
 	end
-	
+
 end
 
 
@@ -642,30 +653,38 @@ function gain_power(nx,ny,spr)
 		end
 	--wip, need to decide what paint powers will be
 	elseif spr == 85 then
+		if red_display then
+			display_message("red paint increases \nfriction for precise jumps!")
+			red_display = false
+		end
 		plr.clr = "red"
+		g_friction = .85
 	elseif spr == 86 then
 		plr.clr = "blue"
-	elseif spr == 85 then
+		g_friction = .95
+	elseif spr == 87 then
+		if yellow_display then
+			display_message("yellow paint lowers \ngravity!")
+			yellow_display = false
+		end
 		plr.clr = "yellow"
+		g_friction = .95
 	end
 end
 
-function deadly_collision(nx,ny) 
-	local y_mod = 0
-	local x_mod = 0
+function deadly_collision(nx,ny)
+ local x_mod = 0
+ local y_mod = 0
 	if plr.dy <= 0 then
 		y_mod = 3
 	end
-	--if plr.dx < 0 then
-	--	x_mod = 3
-	--else
+	--if plr.dx >= 0 then
 	--	x_mod = -3
-	--end
-	 
-	return flag_collision(nx+x_mod,ny+y_mod,deadly_flag) or deadly_obj_at(nx-(level-1)*128,ny-(world-1)*128) 
-	
+	--elseif plr.dy <= 0 then
+ -- x_mod = 3
+ --end
+ return flag_collision(nx+x_mod,ny+y_mod,deadly_flag) or deadly_obj_at((nx)-(level-1)*128,(ny)-(world-1)*128)
 end
-
 
 function solid_collision(nx,ny)
 	return flag_collision(nx,ny,solid_flag) or solid_obj_at(nx-(level-1)*128,ny-(world-1)*128)
@@ -680,7 +699,7 @@ end
 
 function deadly_obj_at(nx,ny)
 	--checkx = "checking x:"..nx.."y:"..ny
-	
+
 	local tempobj = get_obj_at(nx,ny)
 	if tempobj~= nil then
 		if tempobj.deadly then
@@ -692,38 +711,38 @@ end
 
 function solid_obj_at(nx,ny,dy)
 	local tempobj = get_obj_at(nx,ny)
-	
+
 	if tempobj ~= nil then
 		if tempobj.solid then
 			return true
 		end
 	end
-	
+
 	return false
 end
 
 function get_obj_at(nx,ny)
 	local tempobj = nil
 	foreach(on_map,function(obj)
-		
+
 		--give a little lenience
 		local leftx = obj.x
 		local rightx = obj.x+obj.w
 		local upy = obj.y
 		local lowy = obj.y+obj.h
-		
+
 		if obj.h > checkx then
 			checkx = obj.h
 		end
-		
+
 		if leftx <= nx and nx <= rightx then
 			if upy <= ny and ny <= lowy then
 				tempobj = obj
 			end
 		end
-		
+
 	end)
-	
+
 	return tempobj
 end
 
@@ -753,13 +772,13 @@ function physics_update()
 	else
 		plr.dx *= a_friction
 	end
-	
+
 	if plr.on_wall and plr.dy > 0 then
 		gravity = .1
 	else
 		gravity = .25
 	end
-	
+
 	if abs(plr.dx) > plr.max_dx then
 		if plr.dx > 0 then
 			plr.dx = plr.max_dx
@@ -767,11 +786,11 @@ function physics_update()
 			plr.dx = -plr.max_dx
 		end
 	end
-	
+
 	if abs(plr.dx) < 0.1 then
 		plr.dx = 0
 	end
-	
+
 end
 
 
@@ -856,7 +875,7 @@ function create_classes()
 			if this.state == 0 then
 				this.solid = true
 				this.sprite = 77
-				
+
 				if obj_in_range(plr,this.x,this.y-1,8,1) then
 					this.state = 1
 					this.ticker = 40
@@ -883,10 +902,10 @@ function create_classes()
 		end
 	}
 	add(classes,break_block)
-	
+
 	icicle = {
 		tile = 93,
-		
+
 		init = function(this)
 			this.state = 0
 			this.deadly = true
@@ -897,16 +916,16 @@ function create_classes()
 			this.solid = false
 			this.h = 4
 		end,
-		
+
 		draw = function(this)
 			spr(this.sprite,this.x,this.y)
 		end,
-		
+
 		update = function(this)
-			
+
 			local rx = this.x + (level-1)*128
 			local ry = this.y + (world-1)*128
-		
+
 			if this.state == 0 then
 				if abs(plr.x - this.x) < 10 then
 					--dont want to start falling until theyre on the right level
@@ -916,9 +935,9 @@ function create_classes()
 							result = true
 						end
 					end
-					
+
 					if not result then
-					
+
 						this.state = 1
 						this.sprite = 94
 						this.weighted = true
@@ -938,69 +957,69 @@ function create_classes()
 					destroy_object(this)
 				end
 			end
-			
+
 			if this.y > 128 then
 				destroy_object(this)
 			end
 		end
 		}
 		add(classes,icicle)
-		
+
 		move_platform = {
-		
+
 		tile = 110,
-		
+
 		init = function(this)
 			this.solid = true
 			this.dir = sgn(rnd(2)-1)
 			this.h = 4
 			this.w = 16
 		end,
-		
+
 		update = function(this)
-		
+
 			local rx = this.x + (level-1)*128
 			local ry = this.y + (world-1)*128
-		
+
 			if plr.y <= this.y-5 then
 				this.solid = true
 			else
 				this.solid = false
 			end
-			
+
 			local xoff = -1
-			
+
 			if this.dir > 0 then
 				xoff = 17
 			end
-			
+
 			this.x+=this.dir
-			
+
 			if solid_collision(rx+xoff+this.dir,ry) then
 				this.dir*=-1
 			elseif this.x+this.w > 128 or this.x < 0 then
 				this.dir*=-1
 			end
-			
+
 			if obj_in_range(plr,this.x,this.y-1,16,1) then
 				g_friction = .93
 				plr.x+=this.dir
 			end
-			
-			
+
+
 		end,
-		
+
 		draw = function(this)
 			spr(110,this.x,this.y,2,1)
 		end
-		
-		} 
-		
+
+		}
+
 		add(classes,move_platform)
-	
+
 		elevator = {
 		tile = 126,
-		
+
 		init = function(this)
 			this.solid = true
 			this.h = 8
@@ -1009,14 +1028,14 @@ function create_classes()
 			this.startx = this.x
 			this.starty = this.y
 		end,
-		
+
 		update = function(this)
 			if obj_in_range(plr,this.x,this.y-1,16,1) then
 				this.state = 1
 			else
 				this.state = 0
 			end
-			
+
 			--if players on top
 			if this.state == 1 then
 				if abs(this.y - this.starty) < 20 then
@@ -1033,7 +1052,7 @@ function create_classes()
 				end
 			end
 		end,
-		
+
 		draw = function(this)
 			if this.state == 1 then
 				pal(8,11)
@@ -1043,7 +1062,7 @@ function create_classes()
 		end
 	}
 		add(classes,elevator)
-	
+
 end
 
 function create(x,y,class)
@@ -1069,14 +1088,14 @@ function destroy_object(this)
 end
 
 function obj_in_range(obj,x,y,w,h)
-	
+
 	--have to implement height
-	
+
 	local leftx = obj.x
 	local rightx = obj.x+obj.w
 	local upy = obj.y
 	local lowy = obj.y+obj.h
-	
+
 	for cx = x,x+w-1 do
 		if leftx <= cx and cx <= rightx then
 			if upy <= y and y <= lowy then
@@ -1084,7 +1103,7 @@ function obj_in_range(obj,x,y,w,h)
 			end
 		end
 	end
-end 
+end
 -->8
 --misc functions
 
@@ -1112,7 +1131,7 @@ function next_level()
 		level = 1
 		world+=1
 	end
-	
+
 	start_room()
 	plr.respawn()
 end
@@ -1158,12 +1177,12 @@ cc80cc0c000000000c00000000000000000000000000000000000000000000000000000000000000
 4000000444544545b33333339aaaaaa999999999aaaaaaaa99999999000880005b30000043b34443355b34440aaaaaaaaaaaaaa04a999994a000990900000000
 44444444444444443b3bb3bb9999999999999999aaaaaaaa9999999900088000b30000003334444b33353355aaaaaaaaaaaaaaaa44444444a099990a00090000
 444444440000000000000000000000000006600000000000000000000000000053bb00003bb44bbb4435bb35aaaaaaaaaaaaaaaa06cccc600000000000000000
-4444444400000000000000000000000000066000005555500055555000000000553b000033b4bb4444435b330aaaaaaaaaaaaaa006cccc600000000000000000
-44444444000000000000000000000000006556000588888505ccccc500000000053bb00055333bbb44433bb300aaaaaaaaaaaa00006cc60006cccc6000006000
-444444440000000000000000000000000065560005588855055ccc55000000000553b0004555533bb444b4bb000aaaaaaaaaa000006cc60006cccc600006c600
-44444444000000000000000000000000006556000055555000555550000000000053bb0044445553b4bb3444aa00aaaaaaaa00aa000cc000006cc6000006cc60
-444444440000000000000000000000000655556000555550005555500000000000553b0044444453bb333444a0000aaaaaa0000000066000006cc600006cccc6
-44444444000000003333333300000000065555600005550000055500000000000053bb004444443344444444000a00aaaa00a00000000000000cc000006cc660
+4444444400000000000000000000000000066000005555500055555000555550553b000033b4bb4444435b330aaaaaaaaaaaaaa006cccc600000000000000000
+44444444000000000000000000000000006556000588888505ccccc505aaaaa5053bb00055333bbb44433bb300aaaaaaaaaaaa00006cc60006cccc6000006000
+444444440000000000000000000000000065560005588855055ccc55055aaa550553b0004555533bb444b4bb000aaaaaaaaaa000006cc60006cccc600006c600
+44444444000000000000000000000000006556000055555000555550005555500053bb0044445553b4bb3444aa00aaaaaaaa00aa000cc000006cc6000006cc60
+444444440000000000000000000000000655556000555550005555500055555000553b0044444453bb333444a0000aaaaaa0000000066000006cc600006cccc6
+44444444000000003333333300000000065555600005550000055500000555000053bb004444443344444444000a00aaaa00a00000000000000cc000006cc660
 4444444400000033333333333300000056555565000000000000000000000000053bb00044444433b4444444000a000aa0000a00000000000006600000666000
 0b0b0b0b0000333333333333333300005655556500000077770000000000088888800000777777777777777777777777ccccccccccccccc70aaaaaaaaaaaaaa0
 b3b3b3b300033333333333333333300006555560000007777770000000008eeeeee80000777cccccccccc777777cc777ccccccccccccccc7aaaaaaaaaaaaaaaa
@@ -1207,13 +1226,13 @@ bbbbbbbb00000000000000000000000000aaaa005556660000666555008e00000000e8007ccccccc
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000900000000000000000000000343400000000e600000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000003434000000004545454545454545454545450000000000000000000000000000000000000000000000000000000000000000
+00000000000000000000000000003434650055004545454545454545454545450000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 90909090909090909090909090909090909090909090909090909090909090900000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 64646464646464646464646464646464646464646464646464646464646464640000000000000000000000000000000000000000000000000000000000000000
 __gff__
-0000000000000000000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003030707030707810107070101000000030101010b1010000107070101000000030101010b000000000707070707000003000000110909000007070707070000
+0000000000000000000700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000003030707030707810107070101000000030101010b1111110107070101000000030101010b000000000707070707000003000000110909000007070707070000
 0000000000000000000707070700000000000000000000000007070707000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004242424242424242424200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1229,7 +1248,7 @@ __map__
 494a000000480000580000000000494a000000000000000000005400000000490000420000480000424200007070705900000000000000000000000000494a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 595a424242424242424242000000595a000000000000000060707070600000590000480000540000000000000000004900000000000000000000000000595a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000048000000480000000000494a0000000000000000480000004800004900005800004200000000006e0000005900000000000000000000000000494a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000000058000000580000000000595a000000000000000058000000580000590000480000580000000000000000000000000000000000000000000000595a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000058000000580000000000595a000000000000000058000000585700590056480000580000000000000000000000000000000000000000000000595a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 42424242424242424242424242424242424242000000004242420000484242424242420000480000000000000074470000000000000000000000007e00494a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4141414141414141414141414141414141414100000000414141000058414141414100000058000000000000007070494141415454546e000000000000595a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c7c6c6c6c6c6c6c6c6c6c6c6c6c6c6c6c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
