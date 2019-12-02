@@ -55,8 +55,8 @@ function _init()
 	tempstr = ""
 	msg_tick = 0
 
-	world = 3
-	level = 3
+	world = 1
+	level = 1
 
 	g_rev = false
 
@@ -90,7 +90,7 @@ function _init()
 		dy = 0,
 		weighted = true,
 		is_player = true,
-		max_dy = 3,
+		max_dy = 4,
 		max_dx = 4,
 		sprite = sprites.standing,
 		on_ground = true,
