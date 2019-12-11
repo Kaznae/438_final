@@ -312,6 +312,9 @@ function _init()
 						plr.dy = -2
 					end
 				else
+					if world == 4 and level == 4 then
+						plr.weighted = false
+					end
 					plr.sprite = sprites.running
 					plr.face_r = false
 					plr.x+=1
@@ -1464,6 +1467,7 @@ end
 function next_level()
 	on_map = {}
 	plr.clr = "blue"
+	plr.weighted = true
 	level+=1
 	if world == 1 and level > 7 then
 		level = 1
@@ -1670,4 +1674,3 @@ __music__
 01 03044544
 02 04050344
 03 060f4344
-
