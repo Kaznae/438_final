@@ -59,8 +59,8 @@ function _init()
 	
 	cutscene = false
 
-	world = 3
-	level = 5
+	world = 1
+	level = 1
 	g_rev = false
 
 	mapx_ofst = 0
