@@ -15,6 +15,7 @@ function _init()
 	sely = 0
 	tspr = 1
 	tick = 0
+	last_music = true
 	--constants
 
 	g_friction = .95
@@ -778,6 +779,10 @@ function _update()
 		if screen == "victory" then
 			part_tick += 1
 			clouds_update()
+			if last_music then
+			 music(0)
+				last_music = false
+			end
 		end
 	else
 	--	if world == 3 and level == 3 then
@@ -2389,4 +2394,3 @@ __music__
 02 090a0844
 03 0b144344
 03 05064344
-
